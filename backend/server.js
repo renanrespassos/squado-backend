@@ -60,4 +60,32 @@ app.listen(PORT, () => {
   console.log(`   http://localhost:${PORT}/api/health\n`);
 });
 
+
+// ── Migração de banco ─────────────────────────────
+app.post('/api/__migrate__', async (req, res) => {
+  if(req.headers['x-migrate-key'] !== 'squado_migrate_2024') return res.status(403).json({erro:'Proibido'});
+  const { query } = require('./db');
+  const fs = require('fs');
+  const path = require('path');
+  try {
+    // Adicionar colunas faltantes na tabela metas
+    const sqls = [
+      `ALTER TABLE metas ADD COLUMN IF NOT EXISTS tipo VARCHAR(10)`,
+      `ALTER TABLE metas ADD COLUMN IF NOT EXISTS objetivo TEXT`,
+      `ALTER TABLE metas ADD COLUMN IF NOT EXISTS area VARCHAR(100)`,
+      `ALTER TABLE metas ADD COLUMN IF NOT EXISTS periodo VARCHAR(50)`,
+      `ALTER TABLE metas ADD COLUMN IF NOT EXISTS key_results JSONB DEFAULT '[]'`,
+      `ALTER TABLE metas ADD COLUMN IF NOT EXISTS status VARCHAR(30) DEFAULT 'Pendente'`,
+      `ALTER TABLE metas ADD COLUMN IF NOT EXISTS progresso INT DEFAULT 0`,
+      `ALTER TABLE metas ADD COLUMN IF NOT EXISTS colaborador_id UUID REFERENCES colaboradores(id) ON DELETE SET NULL`,
+    ];
+    const results = [];
+    for(const sql of sqls){
+      try{ await query(sql); results.push('OK: '+sql.slice(0,50)); }
+      catch(e){ results.push('ERR: '+e.message.slice(0,80)); }
+    }
+    res.json({ok:true, results});
+  } catch(e){ res.status(500).json({erro:e.message}); }
+});
+
 module.exports = app;
