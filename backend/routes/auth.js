@@ -4,22 +4,22 @@ const jwt     = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
 const { query } = require('../db');
 
-// ── POST /api/auth/registro ───────────────────────────────────
+// ââ POST /api/auth/registro âââââââââââââââââââââââââââââââââââ
 router.post('/registro', async (req, res) => {
   const { nome, email, senha, empresa, segmento } = req.body;
 
   if (!nome || !email || !senha) {
-    return res.status(400).json({ erro: 'Nome, email e senha são obrigatórios.' });
+    return res.status(400).json({ erro: 'Nome, email e senha sÃ£o obrigatÃ³rios.' });
   }
   if (senha.length < 8) {
     return res.status(400).json({ erro: 'Senha deve ter pelo menos 8 caracteres.' });
   }
 
   try {
-    // Verificar se email já existe
+    // Verificar se email jÃ¡ existe
     const existe = await query('SELECT id FROM tenants WHERE email = $1', [email.toLowerCase()]);
     if (existe.rows.length) {
-      return res.status(409).json({ erro: 'Email já cadastrado.' });
+      return res.status(409).json({ erro: 'Email jÃ¡ cadastrado.' });
     }
 
     const senhaHash = await bcrypt.hash(senha, 12);
@@ -37,7 +37,7 @@ router.post('/registro', async (req, res) => {
 
     const tenant = rows[0];
 
-    // Criar configurações padrão
+    // Criar configuraÃ§Ãµes padrÃ£o
     await query(
       'INSERT INTO configuracoes (tenant_id) VALUES ($1)',
       [tenant.id]
@@ -55,11 +55,11 @@ router.post('/registro', async (req, res) => {
   }
 });
 
-// ── POST /api/auth/login ──────────────────────────────────────
+// ââ POST /api/auth/login ââââââââââââââââââââââââââââââââââââââ
 router.post('/login', async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) {
-    return res.status(400).json({ erro: 'Email e senha são obrigatórios.' });
+    return res.status(400).json({ erro: 'Email e senha sÃ£o obrigatÃ³rios.' });
   }
 
   try {
@@ -91,7 +91,8 @@ router.post('/login', async (req, res) => {
         email: tenant.email,
         plano: tenant.plano,
         trialExpira: tenant.trial_expira,
-        assinaturaAtiva: tenant.assinatura_ativa
+        assinaturaAtiva: tenant.assinatura_ativa,
+        isAdmin: ((process.env.ADMIN_EMAILS||'').split(',').map(e=>e.trim().toLowerCase()).filter(Boolean)).includes((tenant.email||'').toLowerCase())
       }
     });
   } catch (err) {
@@ -100,16 +101,16 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// ── GET /api/auth/me ──────────────────────────────────────────
+// ââ GET /api/auth/me ââââââââââââââââââââââââââââââââââââââââââ
 router.get('/me', require('../middleware/auth'), async (req, res) => {
   res.json({ tenant: req.tenant });
 });
 
-// ── POST /api/auth/trocar-senha ───────────────────────────────
+// ââ POST /api/auth/trocar-senha âââââââââââââââââââââââââââââââ
 router.post('/trocar-senha', require('../middleware/auth'), async (req, res) => {
   const { senhaAtual, novaSenha } = req.body;
   if (!senhaAtual || !novaSenha || novaSenha.length < 8) {
-    return res.status(400).json({ erro: 'Dados inválidos.' });
+    return res.status(400).json({ erro: 'Dados invÃ¡lidos.' });
   }
 
   try {
