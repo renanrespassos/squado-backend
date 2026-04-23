@@ -7,7 +7,7 @@ const rateLimit  = require('express-rate-limit');
 const app = express();
 app.set('trust proxy', 1); // Cloud Run / proxy
 
-// ââ SeguranÃ§a âââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ SeguranÃÂ§a Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
@@ -21,7 +21,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 200,
-  message: { erro: 'Muitas requisiÃ§Ãµes. Tente novamente em 15 minutos.' }
+  message: { erro: 'Muitas requisiÃÂ§ÃÂµes. Tente novamente em 15 minutos.' }
 }));
 
 // Rate limit mais restrito para auth
@@ -31,7 +31,7 @@ const authLimit = rateLimit({
   message: { erro: 'Muitas tentativas de login.' }
 });
 
-// ââ Rotas âââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Rotas Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 app.use('/api/auth',          authLimit, require('./routes/auth'));
 app.use('/api/colaboradores', require('./middleware/auth'), require('./routes/colaboradores'));
 app.use('/api/avaliacoes',    require('./middleware/auth'), require('./routes/avaliacoes'));
@@ -45,9 +45,9 @@ app.use('/api/tenant',        require('./middleware/auth'), require('./routes/te
 
 // Admin: estender trial (chave secreta)
 app.post('/api/__admin_trial__', async (req, res) => {
-  const key = req.headers['x-admin-key'];
+  const { email, days, adminKey } = req.body;
+  const key = adminKey || req.headers['x-admin-key'];
   if (key !== 'squado_admin_2026_trial_key') return res.status(403).json({ erro: 'Forbidden' });
-  const { email, days } = req.body;
   if (!email || !days) return res.status(400).json({ erro: 'email e days sao obrigatorios' });
   const { query } = require('./db');
   const { rows } = await query(`UPDATE tenants SET trial_expira = NOW() + (INTERVAL '1 day' * $1) WHERE email = $2 RETURNING id, email, plano, trial_expira`, [days, email.toLowerCase()]);
@@ -60,7 +60,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', versao: '1.0.0', produto: 'Squado' });
 });
 
-// ââ Erro global âââââââââââââââââââââââââââââââââââââââââââââââ
+// Ã¢ÂÂÃ¢ÂÂ Erro global Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ erro: 'Erro interno do servidor.' });
@@ -68,7 +68,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`\nð Squado API rodando na porta ${PORT}`);
+  console.log(`\nÃ°ÂÂÂ Squado API rodando na porta ${PORT}`);
   console.log(`   http://localhost:${PORT}/api/health\n`);
 });
 
