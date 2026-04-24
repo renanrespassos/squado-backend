@@ -1,12 +1,14 @@
 const router = require('express').Router();
 const { query } = require('../db');
+const validate = require('../middleware/validate');
+const schemas  = require('../schemas');
 
 router.get('/', async (req, res) => {
   const { rows } = await query('SELECT * FROM configuracoes WHERE tenant_id=$1', [req.tenantId]);
   res.json(rows[0] || {});
 });
 
-router.put('/', async (req, res) => {
+router.put('/', validate(schemas.configUpdate), async (req, res) => {
   const {
     valores, matriz_comp, perguntas, niveis,
     organograma_pos, organograma_conn, gestor_config, ninebox,

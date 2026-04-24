@@ -51,3 +51,78 @@ exports.adminPlano = z.object({
 exports.adminAtivo = z.object({
   ativo: z.boolean({ invalid_type_error: 'ativo deve ser boolean.' }),
 }).strict();
+
+// ── Colaboradores ────────────────────────────────────────────────
+const colaboradorBase = {
+  nome: str.min(1, 'Nome obrigatório.'),
+  nivel: optStr,
+  area: optStr,
+  status: optStr.default('Ativo'),
+  email: optStr,
+  celular: optStr,
+  nascimento: z.string().nullable().optional(),
+  cpf: optStr,
+  endereco: optStr,
+  formacao: optStr,
+  conhecimentos: optStr,
+  obs: optStr,
+  historico: z.array(z.any()).optional().default([]),
+};
+exports.colaboradorCreate = z.object(colaboradorBase).strip();
+exports.colaboradorUpdate = z.object(colaboradorBase).strip();
+
+// ── Metas ────────────────────────────────────────────────────────
+exports.metaCreate = z.object({
+  colaborador_id: z.string().nullable().optional(),
+  tipo: z.enum(['okr', 'smart']).optional(),
+  titulo: optStr,
+  objetivo: optStr,
+  area: optStr,
+  periodo: optStr,
+  key_results: z.array(z.any()).optional().default([]),
+  status: optStr.default('Pendente'),
+  progresso: z.coerce.number().min(0).max(100).optional().default(0),
+  prazo: z.string().nullable().optional(),
+  colaborador: optStr,
+  especifica: optStr,
+  mensuravel: optStr,
+  atingivel: optStr,
+  relevante: optStr,
+  temporal: optStr,
+}).strip();
+
+exports.metaUpdate = exports.metaCreate;
+
+// ── PDIs ─────────────────────────────────────────────────────────
+exports.pdiCreate = z.object({
+  colaborador_id: z.string().nullable().optional(),
+  col_nome: optStr,
+  objetivo: optStr,
+  competencias: z.array(z.any()).optional().default([]),
+  acoes: z.array(z.any()).optional().default([]),
+  revisoes: z.array(z.any()).optional().default([]),
+  status: optStr.default('Em andamento'),
+}).strip();
+
+exports.pdiUpdate = z.object({
+  objetivo: optStr,
+  competencias: z.array(z.any()).optional().default([]),
+  acoes: z.array(z.any()).optional().default([]),
+  revisoes: z.array(z.any()).optional().default([]),
+  status: optStr.default('Em andamento'),
+}).strip();
+
+// ── Config (snapshot) ────────────────────────────────────────────
+// Whitelist dos 22 campos aceitos. Campos extras são removidos (.strip).
+// Cada campo é JSONB genérico — proteção aqui é a whitelist, não o shape.
+const jf = z.any().optional();
+exports.configUpdate = z.object({
+  valores: jf, matriz_comp: jf, perguntas: jf, niveis: jf,
+  organograma_pos: jf, organograma_conn: jf, gestor_config: jf, ninebox: jf,
+  historico_ia: jf,
+  last_save: z.number().nullable().optional(),
+  snapshot_cols: jf, snapshot_avaliacoes: jf, snapshot_metas: jf, snapshot_notas: jf,
+  snapshot_pdis: jf, snapshot_funcoes: jf, snapshot_areas: jf, snapshot_ninebox: jf,
+  snapshot_valores_empresa: jf, snapshot_competencias: jf, snapshot_niveis: jf,
+  snapshot_perguntas: jf,
+}).strip();

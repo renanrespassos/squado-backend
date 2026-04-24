@@ -1,11 +1,13 @@
 const router = require('express').Router();
 const { query } = require('../db');
+const validate = require('../middleware/validate');
+const schemas  = require('../schemas');
 
 router.get('/', async (req, res) => {
   const { rows } = await query('SELECT * FROM metas WHERE tenant_id=$1 ORDER BY criado_em DESC', [req.tenantId]);
   res.json(rows);
 });
-router.post('/', async (req, res) => {
+router.post('/', validate(schemas.metaCreate), async (req, res) => {
   try {
     const f = req.body;
     const { rows } = await query(
@@ -20,7 +22,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({ erro: e.message });
   }
 });
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(schemas.metaUpdate), async (req, res) => {
   try {
     const f = req.body;
     const { rows } = await query(

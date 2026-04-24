@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const { query } = require('../db');
 const { v4: uuid } = require('uuid');
+const validate = require('../middleware/validate');
+const schemas  = require('../schemas');
 
 // GET /api/colaboradores
 router.get('/', async (req, res) => {
@@ -30,9 +32,8 @@ router.get('/:id', async (req, res) => {
 });
 
 // POST /api/colaboradores
-router.post('/', async (req, res) => {
+router.post('/', validate(schemas.colaboradorCreate), async (req, res) => {
   const { nome, nivel, area, status, email, celular, nascimento, cpf, endereco, formacao, conhecimentos, obs, historico } = req.body;
-  if (!nome) return res.status(400).json({ erro: 'Nome obrigatório.' });
 
   try {
     const { rows } = await query(
@@ -51,7 +52,7 @@ router.post('/', async (req, res) => {
 });
 
 // PUT /api/colaboradores/:id
-router.put('/:id', async (req, res) => {
+router.put('/:id', validate(schemas.colaboradorUpdate), async (req, res) => {
   const { nome, nivel, area, status, email, celular, nascimento, cpf, endereco, formacao, conhecimentos, obs, historico } = req.body;
 
   try {
