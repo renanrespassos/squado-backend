@@ -4,22 +4,22 @@ const jwt     = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
 const { query } = require('../db');
 
-// ââ POST /api/auth/registro âââââââââââââââââââââââââââââââââââ
+// ── POST /api/auth/registro ──────────────────────────────────────
 router.post('/registro', async (req, res) => {
   const { nome, email, senha, empresa, segmento } = req.body;
 
   if (!nome || !email || !senha) {
-    return res.status(400).json({ erro: 'Nome, email e senha sÃ£o obrigatÃ³rios.' });
+    return res.status(400).json({ erro: 'Nome, email e senha são obrigatórios.' });
   }
   if (senha.length < 8) {
     return res.status(400).json({ erro: 'Senha deve ter pelo menos 8 caracteres.' });
   }
 
   try {
-    // Verificar se email jÃ¡ existe
+    // Verificar se email já existe
     const existe = await query('SELECT id FROM tenants WHERE email = $1', [email.toLowerCase()]);
     if (existe.rows.length) {
-      return res.status(409).json({ erro: 'Email jÃ¡ cadastrado.' });
+      return res.status(409).json({ erro: 'Email já cadastrado.' });
     }
 
     const senhaHash = await bcrypt.hash(senha, 12);
@@ -37,7 +37,7 @@ router.post('/registro', async (req, res) => {
 
     const tenant = rows[0];
 
-    // Criar configuraÃ§Ãµes padrÃ£o
+    // Criar configurações padrão
     await query(
       'INSERT INTO configuracoes (tenant_id) VALUES ($1)',
       [tenant.id]
@@ -50,16 +50,16 @@ router.post('/registro', async (req, res) => {
       tenant: { id: tenant.id, nome: tenant.nome, email: tenant.email, plano: tenant.plano, trialExpira: tenant.trial_expira }
     });
   } catch (err) {
-    console.error(err);
+    req.log.error({ err: err.message, route: 'auth/registro' }, 'Erro ao criar conta');
     res.status(500).json({ erro: 'Erro ao criar conta.' });
   }
 });
 
-// ââ POST /api/auth/login ââââââââââââââââââââââââââââââââââââââ
+// ── POST /api/auth/login ─────────────────────────────────────────
 router.post('/login', async (req, res) => {
   const { email, senha } = req.body;
   if (!email || !senha) {
-    return res.status(400).json({ erro: 'Email e senha sÃ£o obrigatÃ³rios.' });
+    return res.status(400).json({ erro: 'Email e senha são obrigatórios.' });
   }
 
   try {
@@ -96,21 +96,21 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error(err);
+    req.log.error({ err: err.message, route: 'auth/login' }, 'Erro ao fazer login');
     res.status(500).json({ erro: 'Erro ao fazer login.' });
   }
 });
 
-// ââ GET /api/auth/me ââââââââââââââââââââââââââââââââââââââââââ
+// ── GET /api/auth/me ─────────────────────────────────────────────
 router.get('/me', require('../middleware/auth'), async (req, res) => {
   res.json({ tenant: req.tenant });
 });
 
-// ââ POST /api/auth/trocar-senha âââââââââââââââââââââââââââââââ
+// ── POST /api/auth/trocar-senha ──────────────────────────────────
 router.post('/trocar-senha', require('../middleware/auth'), async (req, res) => {
   const { senhaAtual, novaSenha } = req.body;
   if (!senhaAtual || !novaSenha || novaSenha.length < 8) {
-    return res.status(400).json({ erro: 'Dados invÃ¡lidos.' });
+    return res.status(400).json({ erro: 'Dados inválidos.' });
   }
 
   try {
@@ -122,6 +122,7 @@ router.post('/trocar-senha', require('../middleware/auth'), async (req, res) => 
     await query('UPDATE tenants SET senha_hash = $1 WHERE id = $2', [novoHash, req.tenantId]);
     res.json({ mensagem: 'Senha alterada com sucesso.' });
   } catch (err) {
+    req.log.error({ err: err.message, route: 'auth/trocar-senha' }, 'Erro ao trocar senha');
     res.status(500).json({ erro: 'Erro ao trocar senha.' });
   }
 });

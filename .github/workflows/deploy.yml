@@ -27,6 +27,8 @@ jobs:
           region: ${{ env.REGION }}
           source: .
           env_vars: |
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            FRONTEND_URL=${{ secrets.FRONTEND_URL }}
+            FRONTEND_URL=https://squado.com.br,https://www.squado.com.br
+            NODE_ENV=production
+          secrets: |
+            DATABASE_URL=database-url:latest
+            JWT_SECRET=jwt-secret:latest
