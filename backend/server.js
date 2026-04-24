@@ -70,11 +70,8 @@ const authLimit = rateLimit({
 // ── Rotas ─────────────────────────────────────────────────────────
 app.use('/api/auth',          authLimit, require('./routes/auth'));
 app.use('/api/colaboradores', require('./middleware/auth'), require('./routes/colaboradores'));
-app.use('/api/avaliacoes',    require('./middleware/auth'), require('./routes/avaliacoes'));
-app.use('/api/notas',         require('./middleware/auth'), require('./routes/notas'));
 app.use('/api/metas',         require('./middleware/auth'), require('./routes/metas'));
 app.use('/api/pdis',          require('./middleware/auth'), require('./routes/pdis'));
-app.use('/api/funcoes',       require('./middleware/auth'), require('./routes/funcoes'));
 app.use('/api/ninebox',       require('./middleware/auth'), require('./routes/ninebox'));
 app.use('/api/config',        require('./middleware/auth'), require('./routes/config'));
 app.use('/api/tenant',        require('./middleware/auth'), require('./routes/tenant'));

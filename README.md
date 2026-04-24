@@ -24,11 +24,8 @@ squado-backend/
 │   └── routes/
 │       ├── auth.js              # Login, registro, trocar senha, /me
 │       ├── colaboradores.js     # CRUD
-│       ├── avaliacoes.js        # CRUD
-│       ├── notas.js             # CRUD
 │       ├── metas.js             # CRUD (OKR + SMART)
 │       ├── pdis.js              # CRUD
-│       ├── funcoes.js           # CRUD
 │       ├── ninebox.js           # Nine-Box (matriz talentos)
 │       ├── config.js            # Snapshot agregado por tenant
 │       ├── tenant.js            # Dados da conta
@@ -99,11 +96,8 @@ gcloud run deploy squado-api \
 | GET / POST          | `/api/colaboradores`                     | Listar / criar                  |
 | GET / PUT / DELETE  | `/api/colaboradores/:id`                 | Detalhe / editar / excluir      |
 | PATCH               | `/api/colaboradores/:id/desligar`        | Desligar mantendo histórico     |
-| GET / POST          | `/api/avaliacoes`                        | CRUD                            |
-| GET / POST          | `/api/notas`                             | CRUD                            |
 | GET / POST / PUT    | `/api/metas`                             | CRUD (OKR + SMART)              |
 | GET / POST / PUT    | `/api/pdis`                              | CRUD                            |
-| GET / POST / PUT    | `/api/funcoes`                           | CRUD                            |
 | GET / POST / DELETE | `/api/ninebox`                           | Posições nine-box               |
 | GET / PUT           | `/api/config`                            | Snapshot agregado (legacy+live) |
 | GET / PUT           | `/api/tenant`                            | Dados da empresa                |
