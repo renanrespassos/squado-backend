@@ -27,8 +27,10 @@ jobs:
           region: ${{ env.REGION }}
           source: .
           env_vars: |
-            FRONTEND_URL=https://squado.com.br,https://www.squado.com.br
+            FRONTEND_URL=https://squado.com.br,https://www.squado.com.br,https://squado-493016.web.app,https://squado-493016.firebaseapp.com
             NODE_ENV=production
+            PGSSLMODE=disable
+            ADMIN_EMAILS=renanresp@gmail.com
           secrets: |
             DATABASE_URL=database-url:latest
             JWT_SECRET=jwt-secret:latest
