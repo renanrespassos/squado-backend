@@ -26,9 +26,9 @@ router.put('/:id', validate(schemas.metaUpdate), async (req, res) => {
   try {
     const f = req.body;
     const { rows } = await query(
-      `UPDATE metas SET titulo=$1,objetivo=$2,area=$3,periodo=$4,key_results=$5,status=$6,progresso=$7
-       WHERE id=$8 AND tenant_id=$9 RETURNING *`,
-      [f.titulo||'',f.objetivo||'',f.area||'',f.periodo||'',JSON.stringify(f.key_results||[]),
+      `UPDATE metas SET colaborador_id=$1,titulo=$2,objetivo=$3,area=$4,periodo=$5,key_results=$6,status=$7,progresso=$8
+       WHERE id=$9 AND tenant_id=$10 RETURNING *`,
+      [f.colaborador_id||null,f.titulo||'',f.objetivo||'',f.area||'',f.periodo||'',JSON.stringify(f.key_results||[]),
        f.status||'Pendente',f.progresso||0,req.params.id,req.tenantId]
     );
     res.json(rows[0]);
