@@ -1,7 +1,7 @@
 const router = require('express').Router();
 const { query } = require('../db');
-
-const PLANOS_VALIDOS = ['trial', 'standard', 'pro'];
+const validate = require('../middleware/validate');
+const schemas  = require('../schemas');
 
 // Listar todos tenants (com contadores basicos)
 router.get('/tenants', async (req, res) => {
@@ -12,7 +12,6 @@ router.get('/tenants', async (req, res) => {
         t.trial_expira, t.assinatura_ativa, t.ativo,
         t.criado_em,
         (SELECT COUNT(*) FROM colaboradores c WHERE c.tenant_id = t.id) AS qtd_colaboradores,
-        (SELECT COUNT(*) FROM avaliacoes a WHERE a.tenant_id = t.id) AS qtd_avaliacoes,
         (SELECT COUNT(*) FROM metas m WHERE m.tenant_id = t.id) AS qtd_metas
       FROM tenants t
       ORDER BY t.criado_em DESC
@@ -25,12 +24,9 @@ router.get('/tenants', async (req, res) => {
 });
 
 // Estender trial em N dias (a partir de hoje OU da data atual de expiracao, o que for maior)
-router.post('/tenants/:id/extend-trial', async (req, res) => {
+router.post('/tenants/:id/extend-trial', validate(schemas.adminExtendTrial), async (req, res) => {
   const { id } = req.params;
-  const days = parseInt(req.body.days, 10);
-  if (!days || days < 1 || days > 365) {
-    return res.status(400).json({ erro: 'days deve ser entre 1 e 365.' });
-  }
+  const { days } = req.body;
   try {
     const { rows } = await query(`
       UPDATE tenants
@@ -47,12 +43,9 @@ router.post('/tenants/:id/extend-trial', async (req, res) => {
 });
 
 // Trocar plano (trial | standard | pro)
-router.put('/tenants/:id/plano', async (req, res) => {
+router.put('/tenants/:id/plano', validate(schemas.adminPlano), async (req, res) => {
   const { id } = req.params;
   const { plano } = req.body;
-  if (!PLANOS_VALIDOS.includes(plano)) {
-    return res.status(400).json({ erro: 'Plano invalido. Use: ' + PLANOS_VALIDOS.join(', ') });
-  }
   try {
     // Se for upgrade para standard/pro, marcar assinatura_ativa=true e limpar trial_expira
     // Se for downgrade para trial, dar 7 dias a partir de hoje
@@ -77,12 +70,9 @@ router.put('/tenants/:id/plano', async (req, res) => {
 });
 
 // Ativar/desativar conta
-router.put('/tenants/:id/ativo', async (req, res) => {
+router.put('/tenants/:id/ativo', validate(schemas.adminAtivo), async (req, res) => {
   const { id } = req.params;
   const { ativo } = req.body;
-  if (typeof ativo !== 'boolean') {
-    return res.status(400).json({ erro: 'ativo deve ser boolean.' });
-  }
   try {
     const { rows } = await query(
       'UPDATE tenants SET ativo = $1 WHERE id = $2 RETURNING id, nome, email, ativo',

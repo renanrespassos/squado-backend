@@ -1,10 +1,12 @@
 const router = require('express').Router();
 const { query } = require('../db');
+const validate = require('../middleware/validate');
+const schemas  = require('../schemas');
 
 router.get('/', async (req, res) => {
   res.json(req.tenant);
 });
-router.put('/', async (req, res) => {
+router.put('/', validate(schemas.tenantUpdate), async (req, res) => {
   const { nome, empresa, segmento, qtd_amostras, cor_primaria } = req.body;
   const { rows } = await query(
     'UPDATE tenants SET nome=$1,empresa=$2,segmento=$3,qtd_amostras=$4,cor_primaria=$5 WHERE id=$6 RETURNING id,nome,email,empresa,segmento,plano,qtd_amostras',

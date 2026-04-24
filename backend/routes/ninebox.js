@@ -1,11 +1,13 @@
 const router = require('express').Router();
 const { query } = require('../db');
+const validate = require('../middleware/validate');
+const schemas  = require('../schemas');
 
 router.get('/', async (req, res) => {
   const { rows } = await query('SELECT * FROM ninebox WHERE tenant_id=$1', [req.tenantId]);
   res.json(rows);
 });
-router.post('/', async (req, res) => {
+router.post('/', validate(schemas.nineboxCreate), async (req, res) => {
   const { colaborador_id, desempenho, potencial } = req.body;
   const { rows } = await query(
     `INSERT INTO ninebox (tenant_id,colaborador_id,desempenho,potencial)

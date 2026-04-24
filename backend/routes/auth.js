@@ -3,17 +3,12 @@ const bcrypt  = require('bcryptjs');
 const jwt     = require('jsonwebtoken');
 const { v4: uuid } = require('uuid');
 const { query } = require('../db');
+const validate = require('../middleware/validate');
+const schemas  = require('../schemas');
 
 // ── POST /api/auth/registro ──────────────────────────────────────
-router.post('/registro', async (req, res) => {
+router.post('/registro', validate(schemas.registro), async (req, res) => {
   const { nome, email, senha, empresa, segmento } = req.body;
-
-  if (!nome || !email || !senha) {
-    return res.status(400).json({ erro: 'Nome, email e senha são obrigatórios.' });
-  }
-  if (senha.length < 8) {
-    return res.status(400).json({ erro: 'Senha deve ter pelo menos 8 caracteres.' });
-  }
 
   try {
     // Verificar se email já existe
@@ -56,11 +51,8 @@ router.post('/registro', async (req, res) => {
 });
 
 // ── POST /api/auth/login ─────────────────────────────────────────
-router.post('/login', async (req, res) => {
+router.post('/login', validate(schemas.login), async (req, res) => {
   const { email, senha } = req.body;
-  if (!email || !senha) {
-    return res.status(400).json({ erro: 'Email e senha são obrigatórios.' });
-  }
 
   try {
     const { rows } = await query(
@@ -107,11 +99,8 @@ router.get('/me', require('../middleware/auth'), async (req, res) => {
 });
 
 // ── POST /api/auth/trocar-senha ──────────────────────────────────
-router.post('/trocar-senha', require('../middleware/auth'), async (req, res) => {
+router.post('/trocar-senha', require('../middleware/auth'), validate(schemas.trocarSenha), async (req, res) => {
   const { senhaAtual, novaSenha } = req.body;
-  if (!senhaAtual || !novaSenha || novaSenha.length < 8) {
-    return res.status(400).json({ erro: 'Dados inválidos.' });
-  }
 
   try {
     const { rows } = await query('SELECT senha_hash FROM tenants WHERE id = $1', [req.tenantId]);
