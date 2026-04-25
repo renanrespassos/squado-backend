@@ -11,7 +11,7 @@ router.get('/tenants', async (req, res) => {
         t.id, t.nome, t.email, t.empresa, t.plano,
         t.trial_expira, t.assinatura_ativa, t.ativo,
         t.criado_em,
-        (SELECT COUNT(*) FROM colaboradores c WHERE c.tenant_id = t.id) AS qtd_colaboradores,
+        COALESCE((SELECT jsonb_array_length(dados->'snapshot_cols') FROM configuracoes cfg WHERE cfg.tenant_id = t.id), 0) AS qtd_colaboradores,
         (SELECT COUNT(*) FROM metas m WHERE m.tenant_id = t.id) AS qtd_metas
       FROM tenants t
       ORDER BY t.criado_em DESC
