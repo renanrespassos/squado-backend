@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { query } = require('../db');
+const { queryNoRLS: query } = require('../db');
 const validate = require('../middleware/validate');
 const schemas  = require('../schemas');
 

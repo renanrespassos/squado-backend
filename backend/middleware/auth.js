@@ -1,5 +1,5 @@
 const jwt  = require('jsonwebtoken');
-const { query } = require('../db');
+const { query, tenantContext } = require('../db');
 
 module.exports = async (req, res, next) => {
   const header = req.headers.authorization;
@@ -11,7 +11,7 @@ module.exports = async (req, res, next) => {
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Verificar se o tenant ainda está ativo
+    // Query em tenants (sem RLS — tabela não tem policy)
     const { rows } = await query(
       'SELECT id, nome, email, plano, trial_expira, assinatura_ativa, ativo FROM tenants WHERE id = $1',
       [payload.tenantId]
@@ -36,7 +36,9 @@ module.exports = async (req, res, next) => {
 
     req.tenant   = tenant;
     req.tenantId = tenant.id;
-    next();
+
+    // Propagar tenant context pra todas as queries downstream (RLS)
+    tenantContext.run({ tenantId: tenant.id }, () => next());
   } catch (err) {
     return res.status(401).json({ erro: 'Token inválido ou expirado.' });
   }
