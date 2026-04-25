@@ -1,5 +1,17 @@
 const z = require('zod');
 
+// ── Error map global PT-BR ──────────────────────────────────────
+z.setErrorMap((issue, ctx) => {
+  const msgs = {
+    invalid_type: `Esperado ${issue.expected}, recebido ${issue.received}.`,
+    too_small: `Mínimo ${issue.minimum} caractere${issue.minimum!==1?'s':''}.`,
+    too_big: `Máximo ${issue.maximum} caractere${issue.maximum!==1?'s':''}.`,
+    invalid_string: issue.validation === 'email' ? 'Email inválido.' : issue.validation === 'uuid' ? 'ID inválido.' : 'Formato inválido.',
+    invalid_enum_value: `Valor inválido. Opções: ${issue.options?.join(', ')}.`,
+  };
+  return { message: msgs[issue.code] || ctx.defaultError };
+});
+
 // ── Helpers ──────────────────────────────────────────────────────
 const str = z.string().trim();
 const optStr = str.optional().default('');
@@ -26,16 +38,16 @@ exports.trocarSenha = z.object({
 // ── Nine-Box ─────────────────────────────────────────────────────
 exports.nineboxCreate = z.object({
   colaborador_id: z.string().uuid('colaborador_id deve ser UUID válido.'),
-  desempenho: z.coerce.number().int().min(1).max(3),
-  potencial: z.coerce.number().int().min(1).max(3),
+  desempenho: z.coerce.number().int().min(1, 'Desempenho mínimo é 1.').max(3, 'Desempenho máximo é 3.'),
+  potencial: z.coerce.number().int().min(1, 'Potencial mínimo é 1.').max(3, 'Potencial máximo é 3.'),
 }).strict();
 
 // ── Tenant ───────────────────────────────────────────────────────
 exports.tenantUpdate = z.object({
-  nome: str.min(1).optional(),
+  nome: str.min(1, 'Nome obrigatório.').optional(),
   empresa: optStr,
   segmento: optStr,
-  qtd_amostras: z.coerce.number().int().min(0).optional().default(500),
+  qtd_amostras: z.coerce.number().int().min(0, 'Quantidade não pode ser negativa.').optional().default(500),
   cor_primaria: str.regex(/^#[0-9a-fA-F]{6}$/, 'Cor deve ser hex (#RRGGBB).').optional().default('#0F6E56'),
 }).strip();
 
@@ -81,7 +93,7 @@ exports.metaCreate = z.object({
   periodo: optStr,
   key_results: z.array(z.any()).optional().default([]),
   status: optStr.default('Pendente'),
-  progresso: z.coerce.number().min(0).max(100).optional().default(0),
+  progresso: z.coerce.number().min(0, 'Progresso mínimo é 0.').max(100, 'Progresso máximo é 100.').optional().default(0),
   prazo: z.string().nullable().optional(),
   colaborador: optStr,
   especifica: optStr,
