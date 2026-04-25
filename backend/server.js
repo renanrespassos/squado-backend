@@ -46,7 +46,7 @@ app.use(express.json({ limit: '10mb' }));
 // ── Rate limit geral ──────────────────────────────────────────────
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { erro: 'Muitas requisições. Tente novamente em 15 minutos.' },
@@ -54,10 +54,10 @@ app.use(rateLimit({
 
 // ── Rate limit de auth (IP + email combinados) ────────────────────
 // Antes: só IP → um atacante num mesmo IP saturava a janela de IPs legítimos.
-// Agora: chave = `${ip}:${email}`. Máx 20 tentativas por (IP, email) em 15 min.
+// Agora: chave = `${ip}:${email}`. Máx 50 tentativas por (IP, email) em 15 min.
 const authLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 20,
+  max: 50,
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req) => {
