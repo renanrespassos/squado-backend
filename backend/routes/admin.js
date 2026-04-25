@@ -6,30 +6,17 @@ const schemas  = require('../schemas');
 // Listar todos tenants (com contadores basicos)
 router.get('/tenants', async (req, res) => {
   try {
-    // Usar transação com RLS desabilitado pra acessar configuracoes de todos os tenants
-    const { getClient } = require('../db');
-    const client = await getClient();
-    try {
-      await client.query('BEGIN');
-      await client.query('SET LOCAL row_security = off');
-      const { rows } = await client.query(`
-        SELECT
-          t.id, t.nome, t.email, t.empresa, t.plano,
-          t.trial_expira, t.assinatura_ativa, t.ativo,
-          t.criado_em,
-          COALESCE((SELECT jsonb_array_length(cfg.snapshot_cols) FROM configuracoes cfg WHERE cfg.tenant_id = t.id), 0) AS qtd_colaboradores,
-          (SELECT COUNT(*) FROM metas m WHERE m.tenant_id = t.id) AS qtd_metas
-        FROM tenants t
-        ORDER BY t.criado_em DESC
-      `);
-      await client.query('COMMIT');
-      res.json(rows);
-    } catch(qe) {
-      await client.query('ROLLBACK');
-      throw qe;
-    } finally {
-      client.release();
-    }
+    const { rows } = await query(`
+      SELECT
+        t.id, t.nome, t.email, t.empresa, t.plano,
+        t.trial_expira, t.assinatura_ativa, t.ativo,
+        t.criado_em,
+        0 AS qtd_colaboradores,
+        0 AS qtd_metas
+      FROM tenants t
+      ORDER BY t.criado_em DESC
+    `);
+    res.json(rows);
   } catch (e) {
     console.error('admin /tenants err', e);
     res.status(500).json({ erro: 'Erro ao listar tenants.' });
