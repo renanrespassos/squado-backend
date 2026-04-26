@@ -131,4 +131,33 @@ router.post('/birthday-reminders', async (req, res) => {
   }
 });
 
+// ── POST /api/cron/send-email ──────────────────────────────────
+// Envia email para colaborador (autenticado por JWT)
+router.post('/send-email', async (req, res) => {
+  // Verificar JWT manualmente (este router não usa auth middleware)
+  try {
+    var jwt = require('jsonwebtoken');
+    var token = (req.headers.authorization||'').replace('Bearer ','');
+    if(!token) return res.status(401).json({erro:'Token ausente.'});
+    jwt.verify(token, process.env.JWT_SECRET);
+  } catch(e) {
+    return res.status(401).json({erro:'Token inválido.'});
+  }
+
+  if (!process.env.SENDGRID_API_KEY) {
+    return res.status(500).json({ erro: 'SENDGRID_API_KEY não configurada.' });
+  }
+
+  var { to, subject, html } = req.body;
+  if(!to||!subject||!html) return res.status(400).json({erro:'Campos to, subject e html são obrigatórios.'});
+
+  try {
+    await sendEmail(to, subject, subject, html);
+    res.json({ ok: true, enviado_para: to });
+  } catch(e) {
+    console.error('Erro send-email:', e.message);
+    res.status(500).json({ erro: 'Erro ao enviar email.' });
+  }
+});
+
 module.exports = router;
