@@ -76,6 +76,7 @@ app.use('/api/config',        require('./middleware/auth'), require('./routes/co
 app.use('/api/tenant',        require('./middleware/auth'), require('./routes/tenant'));
 app.use('/api/admin',         require('./middleware/auth'), require('./middleware/admin'), require('./routes/admin'));
 app.use('/api/ai',            require('./middleware/auth'), require('./routes/ai'));
+app.use('/api/cron',          require('./routes/cron'));
 
 // ── Health check (real: toca o banco) ─────────────────────────────
 app.get('/api/health', async (req, res) => {
