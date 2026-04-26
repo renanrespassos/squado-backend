@@ -1,17 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const nodemailer = require('nodemailer');
 const { queryNoRLS: query } = require('../db');
 
-// ── SMTP transporter (Gmail App Password) ──────────────────────
-function getTransporter() {
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!user || !pass) return null;
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user, pass },
+// ── Enviar email via SendGrid HTTP API ─────────────────────────
+async function sendEmail(to, subject, textContent, htmlContent) {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  const fromEmail = process.env.SENDGRID_FROM || 'noreply@squado.com.br';
+  if (!apiKey) throw new Error('SENDGRID_API_KEY não configurada');
+
+  const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+    method: 'POST',
+    headers: {
+      'Authorization': 'Bearer ' + apiKey,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      personalizations: [{ to: [{ email: to }] }],
+      from: { email: fromEmail, name: 'Squado' },
+      subject,
+      content: [
+        { type: 'text/plain', value: textContent },
+        { type: 'text/html', value: htmlContent },
+      ],
+    }),
   });
+
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`SendGrid ${res.status}: ${body}`);
+  }
 }
 
 // ── Buscar aniversariantes de um tenant ────────────────────────
@@ -72,17 +89,14 @@ function formatEmail(liderNome, aniversariantes, tipo) {
 
 // ── POST /api/cron/birthday-reminders ──────────────────────────
 // Chamado diariamente pelo Cloud Scheduler (8h BRT)
-// Verifica aniversários de HOJE e de AMANHÃ para todos os tenants
 router.post('/birthday-reminders', async (req, res) => {
-  // Validar chave de cron (evitar chamadas externas)
   const cronKey = req.headers['x-cron-key'] || req.query.key;
   if (cronKey !== process.env.CRON_KEY && cronKey !== 'manual-test') {
     return res.status(403).json({ erro: 'Acesso negado.' });
   }
 
-  const transporter = getTransporter();
-  if (!transporter) {
-    return res.status(500).json({ erro: 'SMTP não configurado. Defina SMTP_USER e SMTP_PASS.' });
+  if (!process.env.SENDGRID_API_KEY) {
+    return res.status(500).json({ erro: 'SENDGRID_API_KEY não configurada.' });
   }
 
   try {
@@ -91,11 +105,10 @@ router.post('/birthday-reminders', async (req, res) => {
     amanha.setDate(amanha.getDate() + 1);
 
     const diaHoje = hoje.getDate();
-    const mesHoje = hoje.getMonth() + 1; // 1-based
+    const mesHoje = hoje.getMonth() + 1;
     const diaAmanha = amanha.getDate();
     const mesAmanha = amanha.getMonth() + 1;
 
-    // Buscar todos os tenants ativos com seus snapshots
     const { rows: tenants } = await query(`
       SELECT t.id, t.nome, t.email, cfg.snapshot_cols
       FROM tenants t
@@ -114,35 +127,23 @@ router.post('/birthday-reminders', async (req, res) => {
       if (anivHoje.length > 0) {
         const email = formatEmail(tenant.nome.split(' ')[0], anivHoje, 'hoje');
         try {
-          await transporter.sendMail({
-            from: `"Squado" <${process.env.SMTP_USER}>`,
-            to: tenant.email,
-            subject: email.subject,
-            text: email.text,
-            html: email.html,
-          });
+          await sendEmail(tenant.email, email.subject, email.text, email.html);
           enviados++;
         } catch (e) {
-          console.error(`Erro ao enviar email aniversário (hoje) para ${tenant.email}:`, e.message);
+          console.error(`Erro email aniversário (hoje) ${tenant.email}:`, e.message);
           erros++;
         }
       }
 
-      // Aniversariantes de amanhã (lembrete)
+      // Aniversariantes de amanhã
       const anivAmanha = getAniversariantes(cols, diaAmanha, mesAmanha);
       if (anivAmanha.length > 0) {
         const email = formatEmail(tenant.nome.split(' ')[0], anivAmanha, 'amanha');
         try {
-          await transporter.sendMail({
-            from: `"Squado" <${process.env.SMTP_USER}>`,
-            to: tenant.email,
-            subject: email.subject,
-            text: email.text,
-            html: email.html,
-          });
+          await sendEmail(tenant.email, email.subject, email.text, email.html);
           enviados++;
         } catch (e) {
-          console.error(`Erro ao enviar email aniversário (amanhã) para ${tenant.email}:`, e.message);
+          console.error(`Erro email aniversário (amanhã) ${tenant.email}:`, e.message);
           erros++;
         }
       }
@@ -156,7 +157,7 @@ router.post('/birthday-reminders', async (req, res) => {
       erros,
     });
   } catch (e) {
-    console.error('Erro no cron birthday-reminders:', e);
+    console.error('Erro cron birthday-reminders:', e);
     res.status(500).json({ erro: 'Erro ao processar lembretes.' });
   }
 });
